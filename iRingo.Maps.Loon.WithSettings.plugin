@@ -1,0 +1,45 @@
+#!name =  iRingo Maps | Loon Adaptive Hybrid
+#!desc = 从用户提供的 Surge v1.4.0 模块移植；大陆高德底图及道路、国际 Apple 地图能力；保留可调参数面板，不使用 BoxJS。需要 Loon 3.5.1 (983)+。
+#!author = VirgilClyne / 原模块维护者；Loon 兼容移植
+#!homepage = https://NSRingo.github.io/guide/GeoServices/maps
+#!icon = https://developer.apple.com/assets/elements/icons/maps/maps-128x128.png
+#!date = 2026-11-05
+#!loon_version = 3.5.1(983)
+#!type = normal
+
+[Argument]
+GeoManifest.Dynamic.Config.CountryCode = input,"AUTO",type=string,tag=GeoManifest.Dynamic.Config.CountryCode
+UrlInfoSet.Dispatcher = input,"AutoNavi",type=string,tag=UrlInfoSet.Dispatcher
+UrlInfoSet.Directions = input,"AutoNavi",type=string,tag=UrlInfoSet.Directions
+UrlInfoSet.RAP = input,"Apple",type=string,tag=UrlInfoSet.RAP
+UrlInfoSet.LocationShift = input,"AutoNavi",type=string,tag=UrlInfoSet.LocationShift
+TileSet.Earth = input,"AutoNavi",type=string,tag=TileSet.Earth
+TileSet.Flyover = input,"XX",type=string,tag=TileSet.Flyover
+TileSet.Map = input,"CN",type=string,tag=TileSet.Map
+TileSet.Munin = input,"XX",type=string,tag=TileSet.Munin
+TileSet.POI = input,"CN",type=string,tag=TileSet.POI
+TileSet.Roads = input,"XX",type=string,tag=TileSet.Roads
+TileSet.Satellite = input,"HYBRID",type=string,tag=TileSet.Satellite
+TileSet.Traffic = input,"CN",type=string,tag=TileSet.Traffic
+Config.Announcements.Environment = input,"CN",type=string,tag=Config.Announcements.Environment
+Storage = input,"Argument",type=string,tag=Storage
+LogLevel = input,"WARN",type=string,tag=LogLevel
+
+[Rule]
+DOMAIN,gspe11-2-cn-ssl.ls.apple.com,DIRECT
+DOMAIN,gspe12-cn-ssl.ls.apple.com,DIRECT
+DOMAIN,gspe19-cn-ssl.ls.apple.com,DIRECT
+DOMAIN,gspe19-2-cn-ssl.ls.apple.com,DIRECT
+DOMAIN,gspe79-cn-ssl.ls.apple.com,DIRECT
+DOMAIN,gsp76-cn-ssl.ls.apple.com,DIRECT
+DOMAIN-SUFFIX,is.autonavi.com,DIRECT
+
+[Script]
+response if ${url} ~= /^https?:\/\/configuration\.ls\.apple\.com\/config\/defaults/ then script("https://raw.githubusercontent.com/Aimiers/iRingo-Maps-Loon/main/response.js", {${GeoManifest.Dynamic.Config.CountryCode}, ${UrlInfoSet.Dispatcher}, ${UrlInfoSet.Directions}, ${UrlInfoSet.RAP}, ${UrlInfoSet.LocationShift}, ${TileSet.Earth}, ${TileSet.Flyover}, ${TileSet.Map}, ${TileSet.Munin}, ${TileSet.POI}, ${TileSet.Roads}, ${TileSet.Satellite}, ${TileSet.Traffic}, ${Config.Announcements.Environment}, ${Storage}, ${LogLevel}}) with tag="Maps Defaults", requires_body=true, timeout=20
+request if ${url} ~= /^https?:\/\/gspe35-ssl\.ls\.apple\.(com|cn)\/geo_manifest\/dynamic\/config/ then script("https://raw.githubusercontent.com/Aimiers/iRingo-Maps-Loon/main/request.js", {${GeoManifest.Dynamic.Config.CountryCode}, ${UrlInfoSet.Dispatcher}, ${UrlInfoSet.Directions}, ${UrlInfoSet.RAP}, ${UrlInfoSet.LocationShift}, ${TileSet.Earth}, ${TileSet.Flyover}, ${TileSet.Map}, ${TileSet.Munin}, ${TileSet.POI}, ${TileSet.Roads}, ${TileSet.Satellite}, ${TileSet.Traffic}, ${Config.Announcements.Environment}, ${Storage}, ${LogLevel}}) with tag="Maps GeoManifest Request", timeout=30
+response if ${url} ~= /^https?:\/\/gspe35-ssl\.ls\.apple\.(com|cn)\/geo_manifest\/dynamic\/config/ then script("https://raw.githubusercontent.com/Aimiers/iRingo-Maps-Loon/main/response.js", {${GeoManifest.Dynamic.Config.CountryCode}, ${UrlInfoSet.Dispatcher}, ${UrlInfoSet.Directions}, ${UrlInfoSet.RAP}, ${UrlInfoSet.LocationShift}, ${TileSet.Earth}, ${TileSet.Flyover}, ${TileSet.Map}, ${TileSet.Munin}, ${TileSet.POI}, ${TileSet.Roads}, ${TileSet.Satellite}, ${TileSet.Traffic}, ${Config.Announcements.Environment}, ${Storage}, ${LogLevel}}) with tag="Maps GeoManifest Response", requires_body=true, binary_body_mode=true, timeout=30
+request if ${url} ~= /^https:\/\/gspe19(?:-2)?-cn-ssl\.ls\.apple\.com\/tiles(?:\?|$)/ then script("https://raw.githubusercontent.com/Aimiers/iRingo-Maps-Loon/main/cn-road.js") with tag="Maps CN Credential Observe", timeout=5
+request if ${url} ~= /^https:\/\/gspe19(?:-kittyhawk)?-ssl\.ls\.apple\.com\/tile\.vf(?:\?|$)/ then script("https://raw.githubusercontent.com/Aimiers/iRingo-Maps-Loon/main/cn-road.js") with tag="Maps CN Road Rewrite", timeout=5
+
+[Mitm]
+hostname = configuration.ls.apple.com,gspe35-ssl.ls.apple.com,gspe35-ssl.ls.apple.cn,gspe19-cn-ssl.ls.apple.com,gspe19-2-cn-ssl.ls.apple.com,gspe19-ssl.ls.apple.com,gspe19-kittyhawk-ssl.ls.apple.com
